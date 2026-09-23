@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631426691392",
+    "project_id": "glucovida-45b67",
+    "storage_bucket": "glucovida-45b67.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631426691392:android:0b3589b3dd3879e6c8caa5",
+        "android_client_info": {
+          "package_name": "com.example.glucovida"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYgFu0zh6hy-P5xNSQkC_0Cy6JwBnFbiQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
