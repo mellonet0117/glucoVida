@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # glucovida
 
 A new Flutter project.
@@ -15,3 +16,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# glucoVida
+apk_glucoVida
+>>>>>>> ed90c8ea3767c473f397bc11453a5d96a6e40374

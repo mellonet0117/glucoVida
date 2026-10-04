@@ -1,13 +1,119 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../models/registro_alimentacion.dart';
-import '../../services/alimentacion_service.dart';
+import '../../models/recomendacion_alimentacion.dart';
 
-class AlimentacionScreen extends StatelessWidget {
-  AlimentacionScreen({super.key});
+class AlimentacionScreen extends StatefulWidget {
+  const AlimentacionScreen({super.key});
 
-  final AlimentacionService service = AlimentacionService();
+  @override
+  State<AlimentacionScreen> createState() => _AlimentacionScreenState();
+}
+
+class _AlimentacionScreenState extends State<AlimentacionScreen> {
+  String categoriaSeleccionada = 'Todos';
+
+  final List<String> categorias = [
+    'Todos',
+    'Desayuno',
+    'Comida',
+    'Cena',
+    'Colación',
+  ];
+
+  final List<RecomendacionAlimentacion> recomendaciones = const [
+    RecomendacionAlimentacion(
+      nombre: 'Avena con fresas y nueces',
+      categoria: 'Desayuno',
+      descripcion:
+          'Una opción con avena natural, fruta entera y grasas saludables.',
+      ingredientes: [
+        'Avena natural',
+        'Fresas',
+        'Nueces',
+        'Canela',
+        'Leche o bebida sin azúcar añadida',
+      ],
+      beneficios: ['Fuente de fibra', 'Fruta entera', 'Sin azúcar añadida'],
+      icono: '🥣',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Huevos con verduras',
+      categoria: 'Desayuno',
+      descripcion: 'Desayuno con proteína y verduras que puede acompañarse con una porción de cereal integral.',
+      ingredientes: [
+        'Huevos',
+        'Espinaca',
+        'Tomate',
+        'Cebolla',
+        'Tortilla integral o de maíz',
+      ],
+      beneficios: ['Proteína', 'Verduras', 'Opción baja en azúcar añadida'],
+      icono: '🍳',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Pollo con ensalada',
+      categoria: 'Comida',
+      descripcion: 'Combinación de proteína magra con verduras frescas.',
+      ingredientes: [
+        'Pollo a la plancha',
+        'Lechuga',
+        'Pepino',
+        'Tomate',
+        'Aguacate',
+      ],
+      beneficios: ['Proteína', 'Verduras', 'Grasas saludables'],
+      icono: '🥗',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Lentejas con verduras',
+      categoria: 'Comida',
+      descripcion: 'Las leguminosas aportan fibra y proteína vegetal.',
+      ingredientes: ['Lentejas', 'Zanahoria', 'Tomate', 'Cebolla', 'Calabaza'],
+      beneficios: ['Fibra', 'Proteína vegetal', 'Leguminosas'],
+      icono: '🥘',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Pescado con verduras',
+      categoria: 'Cena',
+      descripcion: 'Cena sencilla con pescado y verduras cocidas o asadas.',
+      ingredientes: ['Pescado', 'Brócoli', 'Calabaza', 'Pimiento', 'Limón'],
+      beneficios: ['Proteína', 'Verduras', 'Cena ligera'],
+      icono: '🐟',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Yogur natural con semillas',
+      categoria: 'Colación',
+      descripcion: 'Colación sencilla usando yogur natural sin azúcar añadida.',
+      ingredientes: ['Yogur natural sin azúcar', 'Chía', 'Nueces', 'Fresas'],
+      beneficios: ['Proteína', 'Semillas', 'Sin azúcar añadida'],
+      icono: '🥛',
+    ),
+
+    RecomendacionAlimentacion(
+      nombre: 'Manzana con nueces',
+      categoria: 'Colación',
+      descripcion: 'Fruta entera acompañada de una pequeña porción de nueces.',
+      ingredientes: ['Manzana', 'Nueces o almendras'],
+      beneficios: ['Fruta entera', 'Fibra', 'Grasas saludables'],
+      icono: '🍎',
+    ),
+  ];
+
+  List<RecomendacionAlimentacion> get recomendacionesFiltradas {
+    if (categoriaSeleccionada == 'Todos') {
+      return recomendaciones;
+    }
+
+    return recomendaciones
+        .where((item) => item.categoria == categoriaSeleccionada)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,585 +122,352 @@ class AlimentacionScreen extends StatelessWidget {
 
       appBar: AppBar(title: const Text('Alimentación')),
 
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          const Text(
+            'Ideas para tu alimentación',
+            style: TextStyle(
+              fontSize: 27,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
 
-        onPressed: () {
-          _abrirFormulario(context);
-        },
+          const SizedBox(height: 5),
 
-        icon: const Icon(Icons.add),
+          const Text(
+            'Explora opciones que pueden formar parte de una alimentación equilibrada.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
 
-        label: const Text('Registrar comida'),
-      ),
+          const SizedBox(height: 20),
 
-      body: StreamBuilder<List<RegistroAlimentacion>>(
-        stream: service.obtenerRegistros(),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, color: AppColors.warning),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Estas sugerencias son informativas. Las necesidades de alimentación pueden variar entre personas.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          const SizedBox(height: 22),
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+          SizedBox(
+            height: 42,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categorias.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final categoria = categorias[index];
 
-          final registros = snapshot.data ?? [];
+                final seleccionada = categoriaSeleccionada == categoria;
 
-          if (registros.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.restaurant_outlined,
-                    size: 75,
-                    color: AppColors.textMuted,
+                return ChoiceChip(
+                  label: Text(categoria),
+                  selected: seleccionada,
+
+                  selectedColor: AppColors.primary,
+
+                  labelStyle: TextStyle(
+                    color: seleccionada ? Colors.white : AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
                   ),
 
-                  SizedBox(height: 15),
+                  onSelected: (_) {
+                    setState(() {
+                      categoriaSeleccionada = categoria;
+                    });
+                  },
+                );
+              },
+            ),
+          ),
 
-                  Text(
-                    'No tienes comidas registradas',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                  ),
+          const SizedBox(height: 24),
 
-                  SizedBox(height: 5),
+          const Text(
+            'Recomendaciones',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
 
-                  Text(
-                    'Presiona "Registrar comida" para comenzar.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            );
-          }
+          const SizedBox(height: 12),
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(18),
-
-            itemCount: registros.length,
-
-            itemBuilder: (context, index) {
-              return _tarjeta(context, registros[index]);
-            },
-          );
-        },
+          ...recomendacionesFiltradas.map((recomendacion) {
+            return _tarjeta(context, recomendacion);
+          }),
+        ],
       ),
     );
   }
 
-  Widget _tarjeta(BuildContext context, RegistroAlimentacion registro) {
+  Widget _tarjeta(
+    BuildContext context,
+    RecomendacionAlimentacion recomendacion,
+  ) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 13),
+      margin: const EdgeInsets.only(bottom: 14),
 
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
 
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        onTap: () {
+          _mostrarDetalle(context, recomendacion);
+        },
 
-          children: [
-            Container(
-              width: 52,
-              height: 52,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
 
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDFA),
+          child: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
 
-                borderRadius: BorderRadius.circular(14),
+                alignment: Alignment.center,
+
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDFA),
+
+                  borderRadius: BorderRadius.circular(15),
+                ),
+
+                child: Text(
+                  recomendacion.icono,
+                  style: const TextStyle(fontSize: 30),
+                ),
               ),
 
-              child: Icon(_iconoTipo(registro.tipo), color: AppColors.primary),
-            ),
+              const SizedBox(width: 14),
 
-            const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recomendacion.nombre,
 
-                children: [
-                  Text(
-                    registro.tipo,
-
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 4),
-
-                  Text(
-                    registro.alimentos,
-
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-
-                  if (registro.porcion.isNotEmpty) ...[
                     const SizedBox(height: 4),
 
                     Text(
-                      'Porción: ${registro.porcion}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                      recomendacion.descripcion,
 
-                  const SizedBox(height: 5),
+                      maxLines: 2,
 
-                  Text(
-                    _fecha(registro.fechaHora),
-
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-
-                  if (registro.notas.isNotEmpty) ...[
-                    const SizedBox(height: 7),
-
-                    Text(
-                      registro.notas,
+                      overflow: TextOverflow.ellipsis,
 
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
                     ),
+
+                    const SizedBox(height: 8),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: Text(
+                        recomendacion.categoria,
+
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
-                ],
+                ),
               ),
-            ),
 
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'editar') {
-                  _abrirFormulario(context, registro: registro);
-                }
-
-                if (value == 'eliminar') {
-                  _eliminar(context, registro);
-                }
-              },
-
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: 'editar', child: Text('Editar')),
-
-                const PopupMenuItem(value: 'eliminar', child: Text('Eliminar')),
-              ],
-            ),
-          ],
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  IconData _iconoTipo(String tipo) {
-    switch (tipo) {
-      case 'Desayuno':
-        return Icons.free_breakfast_outlined;
-
-      case 'Comida':
-        return Icons.lunch_dining_outlined;
-
-      case 'Cena':
-        return Icons.dinner_dining_outlined;
-
-      case 'Colación':
-        return Icons.apple_outlined;
-
-      default:
-        return Icons.restaurant_outlined;
-    }
-  }
-
-  String _fecha(DateTime fecha) {
-    return '${fecha.day.toString().padLeft(2, '0')}/'
-        '${fecha.month.toString().padLeft(2, '0')}/'
-        '${fecha.year} · '
-        '${fecha.hour.toString().padLeft(2, '0')}:'
-        '${fecha.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _eliminar(
+  void _mostrarDetalle(
     BuildContext context,
-    RegistroAlimentacion registro,
-  ) async {
-    final respuesta = await showDialog<bool>(
-      context: context,
-
-      builder: (_) {
-        return AlertDialog(
-          title: const Text('Eliminar registro'),
-
-          content: Text(
-            '¿Deseas eliminar este registro de ${registro.tipo.toLowerCase()}?',
-          ),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-
-              child: const Text('Cancelar'),
-            ),
-
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (respuesta == true) {
-      await service.eliminar(registro.id);
-    }
-  }
-
-  void _abrirFormulario(
-    BuildContext context, {
-    RegistroAlimentacion? registro,
-  }) {
+    RecomendacionAlimentacion recomendacion,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
 
-      builder: (_) {
-        return _FormularioAlimentacion(registro: registro);
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.75,
+          minChildSize: 0.55,
+          maxChildSize: 0.92,
+          expand: false,
+
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.all(22),
+
+              child: ListView(
+                controller: scrollController,
+
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  Center(
+                    child: Text(
+                      recomendacion.icono,
+                      style: const TextStyle(fontSize: 65),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Text(
+                    recomendacion.nombre,
+
+                    textAlign: TextAlign.center,
+
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    recomendacion.descripcion,
+
+                    textAlign: TextAlign.center,
+
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  const Text(
+                    'Ingredientes',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  ...recomendacion.ingredientes.map(
+                    (ingrediente) => ListTile(
+                      dense: true,
+
+                      contentPadding: EdgeInsets.zero,
+
+                      leading: const Icon(
+                        Icons.check_circle_outline,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
+
+                      title: Text(ingrediente),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  const Text(
+                    'Características',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+
+                    children: recomendacion.beneficios.map((beneficio) {
+                      return Chip(
+                        label: Text(beneficio),
+
+                        backgroundColor: const Color(0xFFF0FDFA),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  Container(
+                    padding: const EdgeInsets.all(14),
+
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+
+                    child: const Text(
+                      'Para recomendaciones personalizadas considera las indicaciones de tu médico o profesional de nutrición.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       },
-    );
-  }
-}
-
-class _FormularioAlimentacion extends StatefulWidget {
-  final RegistroAlimentacion? registro;
-
-  const _FormularioAlimentacion({this.registro});
-
-  @override
-  State<_FormularioAlimentacion> createState() =>
-      _FormularioAlimentacionState();
-}
-
-class _FormularioAlimentacionState extends State<_FormularioAlimentacion> {
-  final AlimentacionService service = AlimentacionService();
-
-  late TextEditingController alimentosController;
-
-  late TextEditingController porcionController;
-
-  late TextEditingController notasController;
-
-  String tipo = 'Desayuno';
-
-  DateTime fechaHora = DateTime.now();
-
-  bool guardando = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    alimentosController = TextEditingController(
-      text: widget.registro?.alimentos ?? '',
-    );
-
-    porcionController = TextEditingController(
-      text: widget.registro?.porcion ?? '',
-    );
-
-    notasController = TextEditingController(text: widget.registro?.notas ?? '');
-
-    tipo = widget.registro?.tipo ?? 'Desayuno';
-
-    fechaHora = widget.registro?.fechaHora ?? DateTime.now();
-  }
-
-  @override
-  void dispose() {
-    alimentosController.dispose();
-    porcionController.dispose();
-    notasController.dispose();
-
-    super.dispose();
-  }
-
-  Future<void> seleccionarFecha() async {
-    final fecha = await showDatePicker(
-      context: context,
-      initialDate: fechaHora,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-
-    if (fecha == null || !mounted) {
-      return;
-    }
-
-    setState(() {
-      fechaHora = DateTime(
-        fecha.year,
-        fecha.month,
-        fecha.day,
-        fechaHora.hour,
-        fechaHora.minute,
-      );
-    });
-  }
-
-  Future<void> seleccionarHora() async {
-    final nuevaHora = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(fechaHora),
-    );
-
-    if (nuevaHora == null || !mounted) {
-      return;
-    }
-
-    setState(() {
-      fechaHora = DateTime(
-        fechaHora.year,
-        fechaHora.month,
-        fechaHora.day,
-        nuevaHora.hour,
-        nuevaHora.minute,
-      );
-    });
-  }
-
-  Future<void> guardar() async {
-    if (alimentosController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Escribe los alimentos consumidos.')),
-      );
-
-      return;
-    }
-
-    setState(() {
-      guardando = true;
-    });
-
-    try {
-      if (widget.registro == null) {
-        await service.agregar(
-          tipo: tipo,
-          alimentos: alimentosController.text,
-          porcion: porcionController.text,
-          notas: notasController.text,
-          fechaHora: fechaHora,
-        );
-      } else {
-        await service.actualizar(
-          id: widget.registro!.id,
-          tipo: tipo,
-          alimentos: alimentosController.text,
-          porcion: porcionController.text,
-          notas: notasController.text,
-          fechaHora: fechaHora,
-        );
-      }
-
-      if (!mounted) return;
-
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          guardando = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 25,
-
-        bottom: MediaQuery.of(context).viewInsets.bottom + 25,
-      ),
-
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-
-          children: [
-            Text(
-              widget.registro == null
-                  ? 'Registrar alimentación'
-                  : 'Editar alimentación',
-
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 24),
-
-            DropdownButtonFormField<String>(
-              initialValue: tipo,
-
-              decoration: const InputDecoration(labelText: 'Tipo de comida'),
-
-              items: const [
-                DropdownMenuItem(value: 'Desayuno', child: Text('Desayuno')),
-
-                DropdownMenuItem(value: 'Comida', child: Text('Comida')),
-
-                DropdownMenuItem(value: 'Cena', child: Text('Cena')),
-
-                DropdownMenuItem(value: 'Colación', child: Text('Colación')),
-              ],
-
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    tipo = value;
-                  });
-                }
-              },
-            ),
-
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: alimentosController,
-
-              maxLines: 2,
-
-              decoration: const InputDecoration(
-                labelText: 'Alimentos',
-
-                hintText: 'Ej. pollo, arroz, ensalada...',
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: porcionController,
-
-              decoration: const InputDecoration(
-                labelText: 'Porción',
-
-                hintText: 'Ej. 1 plato, 250 g...',
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: seleccionarFecha,
-
-                    icon: const Icon(Icons.calendar_month),
-
-                    label: Text(
-                      '${fechaHora.day.toString().padLeft(2, '0')}/'
-                      '${fechaHora.month.toString().padLeft(2, '0')}/'
-                      '${fechaHora.year}',
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: seleccionarHora,
-
-                    icon: const Icon(Icons.schedule),
-
-                    label: Text(
-                      '${fechaHora.hour.toString().padLeft(2, '0')}:'
-                      '${fechaHora.minute.toString().padLeft(2, '0')}',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: notasController,
-
-              maxLines: 3,
-
-              decoration: const InputDecoration(
-                labelText: 'Notas',
-
-                hintText: 'Observaciones opcionales...',
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            Container(
-              height: 52,
-
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-
-                borderRadius: BorderRadius.circular(12),
-              ),
-
-              child: Material(
-                color: Colors.transparent,
-
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-
-                  onTap: guardando ? null : guardar,
-
-                  child: Center(
-                    child: guardando
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Guardar',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -264,30 +264,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           borderRadius: BorderRadius.circular(12),
                         ),
-
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          size: 21,
-                          color: Colors.white,
-                        ),
                       ),
 
                       const SizedBox(width: 9),
 
-                      RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                          children: [
-                            TextSpan(text: 'Gluco'),
-                            TextSpan(
-                              text: 'Vida',
-                              style: TextStyle(color: AppColors.primary),
-                            ),
-                          ],
+                      Center(
+                        child: Image.asset(
+                          'assets/images/glucovida_horizontal.png',
+                          width: 175,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ],

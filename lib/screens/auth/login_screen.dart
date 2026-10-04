@@ -128,20 +128,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(width: 9),
 
-                          RichText(
-                            text: const TextSpan(
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                              children: [
-                                TextSpan(text: 'Gluco'),
-                                TextSpan(
-                                  text: 'Vida',
-                                  style: TextStyle(color: AppColors.primary),
-                                ),
-                              ],
+                          Center(
+                            child: Image.asset(
+                              'assets/images/glucovida_horizontal.png',
+                              width: 190,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ],

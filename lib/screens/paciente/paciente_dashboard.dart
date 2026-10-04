@@ -14,6 +14,11 @@ import '../../services/glucosa_service.dart';
 
 import 'medicamentos_screen.dart';
 import 'alimentacion_screen.dart';
+import 'actividad_fisica_screen.dart';
+import 'recordatorios_screen.dart';
+import 'estadisticas_screen.dart';
+import 'perfil_screen.dart';
+import 'configuracion_screen.dart';
 
 import '../../models/medicamento.dart';
 import '../../services/medicamento_service.dart';
@@ -113,27 +118,21 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
         elevation: 0,
         scrolledUnderElevation: 0,
 
-        title: RichText(
-          text: const TextSpan(
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-            children: [
-              TextSpan(text: 'Gluco'),
-              TextSpan(
-                text: 'Vida',
-                style: TextStyle(color: AppColors.primary),
-              ),
-            ],
-          ),
+        title: Image.asset(
+          'assets/images/glucovida_horizontal.png',
+          height: 38,
+          fit: BoxFit.contain,
         ),
 
         actions: [
           IconButton(
             tooltip: 'Notificaciones',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RecordatoriosScreen()),
+              );
+            },
             icon: Stack(
               children: [
                 const Icon(Icons.notifications_none_rounded),
@@ -234,11 +233,10 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                   borderRadius: BorderRadius.circular(13),
 
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'El módulo Registrar glucosa será el siguiente.',
-                        ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RegistrarGlucosaScreen(),
                       ),
                     );
                   },
@@ -448,15 +446,31 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                 children: [
                   _itemMenu(Icons.home_outlined, 'Inicio', activo: true),
 
-                  _itemMenu(Icons.water_drop_outlined, 'Mi Glucosa'),
+                  _itemMenu(
+                    Icons.water_drop_outlined,
+                    'Mi Glucosa',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HistorialGlucosaScreen(),
+                        ),
+                      );
+                    },
+                  ),
 
                   _itemMenu(
                     Icons.add_circle_outline,
                     'Registrar Glucosa',
 
                     onTap: () {
+                      // Cierra el menú lateral
                       Navigator.pop(context);
 
+                      // Abre Registrar Glucosa
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -504,20 +518,90 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
 
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => AlimentacionScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const AlimentacionScreen(),
+                        ),
                       );
                     },
                   ),
 
-                  _itemMenu(Icons.directions_run_outlined, 'Actividad Física'),
+                  _itemMenu(
+                    Icons.directions_run_outlined,
+                    'Actividad Física',
 
-                  _itemMenu(Icons.notifications_none, 'Recordatorios'),
+                    onTap: () {
+                      Navigator.pop(context);
 
-                  _itemMenu(Icons.bar_chart_outlined, 'Estadísticas'),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ActividadFisicaScreen(),
+                        ),
+                      );
+                    },
+                  ),
 
-                  _itemMenu(Icons.person_outline, 'Perfil'),
+                  _itemMenu(
+                    Icons.notifications_none,
+                    'Recordatorios',
 
-                  _itemMenu(Icons.settings_outlined, 'Configuración'),
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecordatoriosScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _itemMenu(
+                    Icons.bar_chart_outlined,
+                    'Estadísticas',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EstadisticasScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _itemMenu(
+                    Icons.person_outline,
+                    'Perfil',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PerfilScreen()),
+                      );
+                    },
+                  ),
+
+                  _itemMenu(
+                    Icons.settings_outlined,
+                    'Configuración',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ConfiguracionScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
