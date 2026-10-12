@@ -50,6 +50,21 @@ class RecomendacionDoctorService {
         );
   }
 
+  Future<void> actualizar({
+    required String pacienteId,
+    required String recomendacionId,
+    required String tipo,
+    required String titulo,
+    required String descripcion,
+  }) async {
+    await coleccion(pacienteId).doc(recomendacionId).update({
+      'tipo': tipo,
+      'titulo': titulo.trim(),
+      'descripcion': descripcion.trim(),
+      'fechaActualizacion': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> eliminar({
     required String pacienteId,
     required String recomendacionId,

@@ -7,6 +7,11 @@ import '../../services/auth_service.dart';
 
 import 'citas_doctor_screen.dart';
 import 'paciente_detalle_doctor.dart';
+import 'mis_pacientes_screen.dart';
+import 'seguimiento_doctor_screen.dart';
+import 'recomendaciones_doctor_screen.dart';
+import 'perfil_doctor_screen.dart';
+import 'configuracion_doctor_screen.dart';
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -285,7 +290,12 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         titulo: 'Pacientes',
 
                         onTap: () {
-                          _mostrarPacientes(pacientes);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MisPacientesScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -318,7 +328,12 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         titulo: 'Seguimiento',
 
                         onTap: () {
-                          moduloProximo('Seguimiento');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SeguimientoDoctorScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -347,7 +362,12 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     if (pacientes.isNotEmpty)
                       TextButton(
                         onPressed: () {
-                          _mostrarPacientes(pacientes);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MisPacientesScreen(),
+                            ),
+                          );
                         },
 
                         child: const Text('Ver todos'),
@@ -508,25 +528,19 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
 
                     titulo: 'Mis pacientes',
 
-                    onTap: () async {
-                      seleccionarMenu('Mis pacientes');
+                    onTap: () {
+                      setState(() {
+                        opcionSeleccionada = 'Mis pacientes';
+                      });
 
                       Navigator.pop(context);
 
-                      final snapshot = await _firestore
-                          .collection('usuarios')
-                          .where('doctorId', isEqualTo: _auth.currentUser?.uid)
-                          .get();
-
-                      if (!mounted) {
-                        return;
-                      }
-
-                      _mostrarPacientes(snapshot.docs);
-
-                      setState(() {
-                        opcionSeleccionada = 'Inicio';
-                      });
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MisPacientesScreen(),
+                        ),
+                      );
                     },
                   ),
 
@@ -537,7 +551,18 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
 
                     titulo: 'Citas médicas',
 
-                    onTap: abrirCitas,
+                    onTap: () {
+                      setState(() {
+                        opcionSeleccionada = 'Citas médicas';
+                      });
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => CitasDoctorScreen()),
+                      );
+                    },
                   ),
 
                   _itemMenu(
@@ -548,7 +573,22 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     titulo: 'Recomendaciones',
 
                     onTap: () {
-                      moduloProximo('Recomendaciones', cerrarDrawer: true);
+                      seleccionarMenu('Recomendaciones');
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecomendacionesDoctorScreen(),
+                        ),
+                      ).then((_) {
+                        if (mounted) {
+                          setState(() {
+                            opcionSeleccionada = 'Recomendaciones';
+                          });
+                        }
+                      });
                     },
                   ),
 
@@ -560,7 +600,22 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     titulo: 'Seguimiento',
 
                     onTap: () {
-                      moduloProximo('Seguimiento', cerrarDrawer: true);
+                      seleccionarMenu('Seguimiento');
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SeguimientoDoctorScreen(),
+                        ),
+                      ).then((_) {
+                        if (mounted) {
+                          setState(() {
+                            opcionSeleccionada = 'Seguimiento';
+                          });
+                        }
+                      });
                     },
                   ),
 
@@ -578,7 +633,24 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     titulo: 'Mi perfil',
 
                     onTap: () {
-                      moduloProximo('Mi perfil', cerrarDrawer: true);
+                      seleccionarMenu('Mi perfil');
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PerfilDoctorScreen(),
+                        ),
+                      ).then((_) async {
+                        await cargarDoctor();
+
+                        if (mounted) {
+                          setState(() {
+                            opcionSeleccionada = 'Mi perfil';
+                          });
+                        }
+                      });
                     },
                   ),
 
@@ -590,7 +662,22 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     titulo: 'Configuración',
 
                     onTap: () {
-                      moduloProximo('Configuración', cerrarDrawer: true);
+                      seleccionarMenu('Configuración');
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ConfiguracionDoctorScreen(),
+                        ),
+                      ).then((_) {
+                        if (mounted) {
+                          setState(() {
+                            opcionSeleccionada = 'Configuración';
+                          });
+                        }
+                      });
                     },
                   ),
                 ],
@@ -640,40 +727,29 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     required String titulo,
     required VoidCallback onTap,
   }) {
-    final seleccionado = opcionSeleccionada == titulo;
+    final bool activo = opcionSeleccionada == titulo;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-
       child: Material(
         color: Colors.transparent,
-
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-
           onTap: onTap,
-
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
-
             curve: Curves.easeInOut,
-
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-
             decoration: BoxDecoration(
-              gradient: seleccionado ? AppColors.primaryGradient : null,
-
+              gradient: activo ? AppColors.primaryGradient : null,
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: Row(
               children: [
                 Icon(
-                  seleccionado ? iconoActivo : icono,
-
+                  activo ? iconoActivo : icono,
                   size: 22,
-
-                  color: seleccionado ? Colors.white : AppColors.textSecondary,
+                  color: activo ? Colors.white : AppColors.textSecondary,
                 ),
 
                 const SizedBox(width: 13),
@@ -681,25 +757,17 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 Expanded(
                   child: Text(
                     titulo,
-
                     style: TextStyle(
                       fontSize: 14,
-
-                      fontWeight: seleccionado
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-
-                      color: seleccionado
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                      fontWeight: activo ? FontWeight.w600 : FontWeight.w500,
+                      color: activo ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ),
 
-                if (seleccionado)
+                if (activo)
                   const Icon(
                     Icons.chevron_right,
-
                     size: 18,
                     color: Colors.white,
                   ),
@@ -988,92 +1056,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
           ),
         ],
       ),
-    );
-  }
-
-  // =========================================================
-  // MOSTRAR TODOS LOS PACIENTES
-  // =========================================================
-
-  void _mostrarPacientes(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> pacientes,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: .75,
-          minChildSize: .5,
-          maxChildSize: .95,
-
-          builder: (context, controller) {
-            return Column(
-              children: [
-                const SizedBox(height: 10),
-
-                Container(
-                  width: 45,
-                  height: 5,
-
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-
-                const Padding(
-                  padding: EdgeInsets.all(18),
-
-                  child: Row(
-                    children: [
-                      Icon(Icons.people_outline, color: AppColors.primary),
-
-                      SizedBox(width: 10),
-
-                      Text(
-                        'Mis pacientes',
-
-                        style: TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: pacientes.isEmpty
-                      ? const Center(
-                          child: Text('No tienes pacientes asignados.'),
-                        )
-                      : ListView.builder(
-                          controller: controller,
-
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-
-                          itemCount: pacientes.length,
-
-                          itemBuilder: (context, index) {
-                            final doc = pacientes[index];
-
-                            return _pacienteCard(
-                              uid: doc.id,
-
-                              datos: doc.data(),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 }
