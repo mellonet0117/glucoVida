@@ -19,6 +19,8 @@ import 'recordatorios_screen.dart';
 import 'estadisticas_screen.dart';
 import 'perfil_screen.dart';
 import 'configuracion_screen.dart';
+import 'recomendaciones_screen.dart';
+import 'citas_screen.dart';
 
 import '../../models/medicamento.dart';
 import '../../services/medicamento_service.dart';
@@ -39,6 +41,8 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
   bool cargandoUsuario = true;
 
   String rangoSeleccionado = 'Hoy';
+
+  String opcionSeleccionada = 'Inicio';
 
   // ===================================
   // PROMEDIO SEMANAL
@@ -111,7 +115,19 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
+      // ==============================
+      // MENÚ LATERAL
+      // ==============================
       drawer: _menuLateral(),
+
+      // Permite abrirlo arrastrando desde la izquierda
+      drawerEnableOpenDragGesture: true,
+
+      // Hace más grande la zona donde detecta el dedo
+      drawerEdgeDragWidth: 80,
+
+      // Oscurece el dashboard mientras el menú está abierto
+      drawerScrimColor: Colors.black.withValues(alpha: 0.35),
 
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -120,7 +136,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
 
         title: Image.asset(
           'assets/images/glucovida_horizontal.png',
-          height: 38,
+          height: 48,
           fit: BoxFit.contain,
         ),
 
@@ -130,7 +146,7 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const RecordatoriosScreen()),
+                MaterialPageRoute(builder: (_) => RecordatoriosScreen()),
               );
             },
             icon: Stack(
@@ -212,15 +228,21 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
               height: 52,
 
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: const LinearGradient(
+                  colors: [
+                    Color.fromARGB(255, 23, 101, 227),
+                    Color.fromARGB(255, 43, 182, 108),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
 
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(10),
 
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.22),
-
-                    blurRadius: 15,
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                    blurRadius: 12,
                     offset: const Offset(0, 5),
                   ),
                 ],
@@ -395,60 +417,59 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(0),
 
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-
-                      borderRadius: BorderRadius.circular(12),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      16, // izquierda
+                      6, // arriba
+                      16, // derecha
+                      6, // abajo
                     ),
-
-                    child: const Icon(
-                      Icons.location_on_rounded,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Image.asset(
+                        'assets/images/glucovida_horizontal.png',
+                        width: 200,
+                        fit: BoxFit.contain,
                       ),
-                      children: [
-                        TextSpan(text: 'Gluco'),
-                        TextSpan(
-                          text: 'Vida',
-                          style: TextStyle(color: AppColors.primary),
-                        ),
-                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            const Divider(height: 1),
+            const Divider(height: 9),
 
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(12),
 
                 children: [
-                  _itemMenu(Icons.home_outlined, 'Inicio', activo: true),
+                  _itemMenu(
+                    Icons.home_outlined,
+                    'Inicio',
+                    activo: opcionSeleccionada == 'Inicio',
+                    onTap: () {
+                      setState(() {
+                        opcionSeleccionada = 'Inicio';
+                      });
+
+                      Navigator.pop(context);
+
+                      setState(() {
+                        opcionSeleccionada = 'Inicio';
+                      });
+                    },
+                  ),
 
                   _itemMenu(
                     Icons.water_drop_outlined,
                     'Mi Glucosa',
+
+                    activo: opcionSeleccionada == 'Mi Glucosa',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -459,12 +480,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => HistorialGlucosaScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Mi Glucosa';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.add_circle_outline,
                     'Registrar Glucosa',
+
+                    activo: opcionSeleccionada == 'Registrar Glucosa',
 
                     onTap: () {
                       // Cierra el menú lateral
@@ -477,12 +504,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => const RegistrarGlucosaScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Registrar Glucosa';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.history,
                     'Historial',
+
+                    activo: opcionSeleccionada == 'Historial',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -493,12 +526,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => HistorialGlucosaScreen(),
                         ),
                       );
+                      setState(() {
+                        opcionSeleccionada = 'Historial';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.medication_outlined,
                     'Medicamentos',
+
+                    activo: opcionSeleccionada == 'Medicamentos',
+
                     onTap: () {
                       Navigator.pop(context);
 
@@ -506,12 +545,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                         context,
                         MaterialPageRoute(builder: (_) => MedicamentosScreen()),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Medicamentos';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.restaurant_outlined,
                     'Alimentación',
+
+                    activo: opcionSeleccionada == 'Alimentación',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -522,12 +567,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => const AlimentacionScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Alimentación';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.directions_run_outlined,
                     'Actividad Física',
+
+                    activo: opcionSeleccionada == 'Actividad Física',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -538,12 +589,18 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => const ActividadFisicaScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Actividad Física';
+                      });
                     },
                   ),
 
                   _itemMenu(
-                    Icons.notifications_none,
-                    'Recordatorios',
+                    Icons.medical_information_outlined,
+                    'Mis recomendaciones',
+
+                    activo: opcionSeleccionada == 'Mis recomendaciones',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -551,15 +608,63 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const RecordatoriosScreen(),
+                          builder: (_) => RecomendacionesScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Mis recomendaciones';
+                      });
+                    },
+                  ),
+
+                  _itemMenu(
+                    Icons.calendar_month_outlined,
+                    'Citas médicas',
+
+                    activo: opcionSeleccionada == 'Citas médicas',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CitasScreen()),
+                      );
+
+                      setState(() {
+                        opcionSeleccionada = 'Citas médicas';
+                      });
+                    },
+                  ),
+
+                  _itemMenu(
+                    Icons.notifications_none,
+                    'Recordatorios',
+
+                    activo: opcionSeleccionada == 'Recordatorios',
+
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RecordatoriosScreen(),
+                        ),
+                      );
+
+                      setState(() {
+                        opcionSeleccionada = 'Recordatorios';
+                      });
                     },
                   ),
 
                   _itemMenu(
                     Icons.bar_chart_outlined,
                     'Estadísticas',
+
+                    activo: opcionSeleccionada == 'Estadísticas',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -570,26 +675,38 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => const EstadisticasScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Estadísticas';
+                      });
                     },
                   ),
-
                   _itemMenu(
                     Icons.person_outline,
                     'Perfil',
 
-                    onTap: () {
+                    activo: opcionSeleccionada == 'Perfil',
+
+                    onTap: () async {
                       Navigator.pop(context);
 
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const PerfilScreen()),
                       );
+
+                      await cargarUsuario();
+
+                      setState(() {
+                        opcionSeleccionada = 'Perfil';
+                      });
                     },
                   ),
-
                   _itemMenu(
                     Icons.settings_outlined,
                     'Configuración',
+
+                    activo: opcionSeleccionada == 'Configuración',
 
                     onTap: () {
                       Navigator.pop(context);
@@ -600,6 +717,10 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
                           builder: (_) => const ConfiguracionScreen(),
                         ),
                       );
+
+                      setState(() {
+                        opcionSeleccionada = 'Configuración';
+                      });
                     },
                   ),
                 ],

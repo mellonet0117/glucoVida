@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/auth/auth_gate.dart';
+import 'services/notificacion_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await NotificacionService.inicializar();
 
   runApp(const GlucoVidaApp());
 }
