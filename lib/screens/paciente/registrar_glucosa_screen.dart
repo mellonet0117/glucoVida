@@ -303,9 +303,24 @@ class _RegistrarGlucosaScreenState extends State<RegistrarGlucosaScreen> {
                     height: 53,
 
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 23, 101, 227),
+                          Color.fromARGB(255, 43, 182, 108),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
 
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
+
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
 
                     child: Material(
