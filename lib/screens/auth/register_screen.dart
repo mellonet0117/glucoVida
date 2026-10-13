@@ -255,23 +255,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
+                      SizedBox(width: 2, height: 2),
 
-                        decoration: BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-
-                      const SizedBox(width: 9),
+                      const SizedBox(width: 5),
 
                       Center(
                         child: Image.asset(
                           'assets/images/glucovida_horizontal.png',
-                          width: 175,
+                          width: 240,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -392,7 +383,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             prefixIcon: const Icon(
                               Icons.mail_outline_rounded,
                               size: 19,
-                              color: AppColors.textMuted,
+                              color: Color.fromARGB(255, 121, 148, 186),
                             ),
                           ),
                         ),
@@ -573,17 +564,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           height: 52,
 
                           decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient,
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color.fromARGB(255, 25, 98, 215),
+                                Color.fromARGB(255, 21, 156, 84),
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
 
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
 
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primary.withValues(
                                   alpha: 0.25,
                                 ),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
+                                blurRadius: 12,
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),

@@ -105,40 +105,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ============================
                       Row(
                         children: [
-                          Container(
-                            width: 31,
-                            height: 31,
-
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.primary, AppColors.accent],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-
-                            child: const Icon(
-                              Icons.location_on_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-
-                          const SizedBox(width: 9),
+                          const SizedBox(width: 32),
 
                           Center(
                             child: Image.asset(
                               'assets/images/glucovida_horizontal.png',
-                              width: 190,
+                              width: 240,
                               fit: BoxFit.contain,
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 34),
+                      const SizedBox(height: 24),
 
                       // ============================
                       // TÍTULO
@@ -362,7 +341,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.accent],
+                            colors: [
+                              Color.fromARGB(255, 25, 98, 215),
+                              Color.fromARGB(255, 21, 156, 84),
+                            ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -401,7 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'Iniciar sesión',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 14,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
