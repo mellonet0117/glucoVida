@@ -38,7 +38,7 @@ class _RecomendacionesDoctorScreenState
 
     return _firestore
         .collection('usuarios')
-        .where('doctorId', isEqualTo: doctor.uid)
+        .where('rol', isEqualTo: 'paciente')
         .snapshots();
   }
 

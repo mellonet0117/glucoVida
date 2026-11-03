@@ -17,7 +17,7 @@ class AppColors {
   static const Color success = Color(0xFF10B981);
 
   // Fondos
-  static const Color background = Color(0xFFF0FAFA);
+  static const Color background = Color.fromARGB(255, 243, 249, 249);
   static const Color surface = Colors.white;
 
   // Textos
@@ -47,6 +47,9 @@ class AppColors {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primary, accent],
+    colors: [
+      Color.fromARGB(255, 25, 98, 215),
+      Color.fromARGB(255, 21, 156, 84),
+    ],
   );
 }

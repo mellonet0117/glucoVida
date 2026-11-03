@@ -81,15 +81,9 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   // =========================================================
 
   Stream<QuerySnapshot<Map<String, dynamic>>> pacientesAsignados() {
-    final usuario = _auth.currentUser;
-
-    if (usuario == null) {
-      return const Stream.empty();
-    }
-
     return _firestore
         .collection('usuarios')
-        .where('doctorId', isEqualTo: usuario.uid)
+        .where('rol', isEqualTo: 'paciente')
         .snapshots();
   }
 
