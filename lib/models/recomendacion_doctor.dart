@@ -6,6 +6,7 @@ class RecomendacionDoctor {
   final String tipo;
   final String titulo;
   final String descripcion;
+  final Map<String, dynamic> detalles;
   final DateTime fecha;
 
   const RecomendacionDoctor({
@@ -14,13 +15,14 @@ class RecomendacionDoctor {
     required this.tipo,
     required this.titulo,
     required this.descripcion,
+    required this.detalles,
     required this.fecha,
   });
 
   factory RecomendacionDoctor.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data()!;
+    final data = doc.data() ?? {};
 
     return RecomendacionDoctor(
       id: doc.id,
@@ -28,6 +30,7 @@ class RecomendacionDoctor {
       tipo: data['tipo'] ?? 'General',
       titulo: data['titulo'] ?? '',
       descripcion: data['descripcion'] ?? '',
+      detalles: Map<String, dynamic>.from(data['detalles'] ?? {}),
       fecha: data['fecha'] is Timestamp
           ? (data['fecha'] as Timestamp).toDate()
           : DateTime.now(),

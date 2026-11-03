@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/glucosa_registro.dart';
 import 'nueva_recomendacion_screen.dart';
+import 'agendar_cita_doctor_screen.dart';
 
 class PacienteDetalleDoctor extends StatelessWidget {
   final String pacienteId;
@@ -12,8 +13,6 @@ class PacienteDetalleDoctor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firestore = FirebaseFirestore.instance;
-
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -39,21 +38,80 @@ class PacienteDetalleDoctor extends StatelessWidget {
       ),
 
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        future: firestore.collection('usuarios').doc(pacienteId).get(),
+        future: FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(pacienteId)
+            .get(),
 
         builder: (context, pacienteSnapshot) {
-          if (!pacienteSnapshot.hasData) {
+          // ==============================
+          // CARGANDO
+          // ==============================
+          if (pacienteSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!pacienteSnapshot.data!.exists) {
-            return const Center(child: Text('Paciente no encontrado'));
+          // ==============================
+          // ERROR FIREBASE
+          // ==============================
+          if (pacienteSnapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(25),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: AppColors.danger,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    const Text(
+                      'No se pudo cargar el paciente',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      '${pacienteSnapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
-          final paciente = pacienteSnapshot.data!.data()!;
+          // ==============================
+          // DOCUMENTO NO EXISTE
+          // ==============================
+          if (!pacienteSnapshot.hasData || !pacienteSnapshot.data!.exists) {
+            return const Center(
+              child: Text('No se encontró la información del paciente.'),
+            );
+          }
 
+          final paciente = pacienteSnapshot.data!.data();
+
+          if (paciente == null) {
+            return const Center(
+              child: Text('El paciente no tiene información registrada.'),
+            );
+          }
+
+          // ==============================
+          // GLUCOSA DEL PACIENTE
+          // ==============================
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: firestore
+            stream: FirebaseFirestore.instance
                 .collection('usuarios')
                 .doc(pacienteId)
                 .collection('glucosa')
@@ -63,6 +121,19 @@ class PacienteDetalleDoctor extends StatelessWidget {
             builder: (context, glucosaSnapshot) {
               if (glucosaSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
+              }
+
+              if (glucosaSnapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      'No se pudo cargar la glucosa:\n'
+                      '${glucosaSnapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
               }
 
               final registros =
@@ -77,10 +148,22 @@ class PacienteDetalleDoctor extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
 
                 children: [
+                  // ==========================
+                  // ENCABEZADO
+                  // ==========================
+
                   _encabezado(paciente),
 
                   const SizedBox(height: 18),
 
+                  // ==========================
+                  // DATOS PERSONALES
+                  // ==========================
+                  const SizedBox(height: 20),
+
+                  // ==========================
+                  // GLUCOSA
+                  // ==========================
                   Row(
                     children: [
                       Expanded(
@@ -115,8 +198,30 @@ class PacienteDetalleDoctor extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
+                  // ==========================
+                  // ACCIONES DOCTOR
+                  // ==========================
+                  const Text(
+                    'Acciones del doctor',
+
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _accionesDoctor(
+                    context,
+                    '${paciente['nombre'] ?? ''} '
+                    '${paciente['apellidos'] ?? ''}',
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // ==========================
+                  // HISTORIAL
+                  // ==========================
                   const Text(
                     'Historial de glucosa',
 
@@ -129,6 +234,7 @@ class PacienteDetalleDoctor extends StatelessWidget {
                     const Card(
                       child: Padding(
                         padding: EdgeInsets.all(25),
+
                         child: Center(
                           child: Text('El paciente aún no tiene mediciones.'),
                         ),
@@ -136,6 +242,8 @@ class PacienteDetalleDoctor extends StatelessWidget {
                     )
                   else
                     ...registros.take(10).map(_registroGlucosa),
+
+                  const SizedBox(height: 90),
                 ],
               );
             },
@@ -332,5 +440,210 @@ class PacienteDetalleDoctor extends StatelessWidget {
     );
 
     return suma / registros.length;
+  }
+
+  Widget _accionesDoctor(BuildContext context, String nombrePaciente) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _botonAccion(
+                icono: Icons.medication_outlined,
+
+                titulo: 'Medicamento',
+
+                onTap: () {
+                  _abrirRecomendacion(context, 'Medicamento');
+                },
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: _botonAccion(
+                icono: Icons.restaurant_outlined,
+
+                titulo: 'Alimentación',
+
+                onTap: () {
+                  _abrirRecomendacion(context, 'Alimentación');
+                },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Row(
+          children: [
+            Expanded(
+              child: _botonAccion(
+                icono: Icons.directions_run_outlined,
+
+                titulo: 'Ejercicio',
+
+                onTap: () {
+                  _abrirRecomendacion(context, 'Actividad física');
+                },
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: _botonAccion(
+                icono: Icons.monitor_heart_outlined,
+
+                titulo: 'Seguimiento',
+
+                onTap: () {
+                  _abrirRecomendacion(context, 'Seguimiento');
+                },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        SizedBox(
+          width: double.infinity,
+
+          child: OutlinedButton.icon(
+            onPressed: () {
+              _abrirRecomendacion(context, 'General');
+            },
+
+            icon: const Icon(Icons.medical_information_outlined),
+
+            label: const Text('Otra recomendación'),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        Container(
+          width: double.infinity,
+          height: 52,
+
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+
+            borderRadius: BorderRadius.circular(13),
+          ),
+
+          child: Material(
+            color: Colors.transparent,
+
+            child: InkWell(
+              borderRadius: BorderRadius.circular(13),
+
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AgendarCitaDoctorScreen(
+                      pacienteId: pacienteId,
+
+                      nombrePaciente: nombrePaciente.trim(),
+                    ),
+                  ),
+                );
+              },
+
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+
+                children: [
+                  Icon(Icons.calendar_month_outlined, color: Colors.white),
+
+                  SizedBox(width: 8),
+
+                  Text(
+                    'Agendar cita',
+
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _botonAccion({
+    required IconData icono,
+    required String titulo,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+
+      borderRadius: BorderRadius.circular(15),
+
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+
+        onTap: onTap,
+
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+
+          child: Column(
+            children: [
+              Container(
+                width: 45,
+                height: 45,
+
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: .10),
+
+                  borderRadius: BorderRadius.circular(12),
+                ),
+
+                child: Icon(icono, color: AppColors.primary),
+              ),
+
+              const SizedBox(height: 9),
+
+              Text(
+                titulo,
+
+                textAlign: TextAlign.center,
+
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _abrirRecomendacion(BuildContext context, String tipo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            NuevaRecomendacionScreen(pacienteId: pacienteId, tipoInicial: tipo),
+      ),
+    );
   }
 }

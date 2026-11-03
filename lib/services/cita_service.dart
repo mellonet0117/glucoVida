@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/cita.dart';
 
@@ -91,5 +92,71 @@ class CitaService {
       'fechaHora': Timestamp.fromDate(nuevaFecha),
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<void> crearCitaDoctor({
+    required String pacienteId,
+    required DateTime fechaHora,
+    required String motivo,
+    String notas = '',
+  }) async {
+    final doctor = FirebaseAuth.instance.currentUser;
+
+    if (doctor == null) {
+      throw Exception('No hay una sesión activa.');
+    }
+
+    debugPrint('DOCTOR UID: ${doctor.uid}');
+
+    debugPrint('PACIENTE UID: $pacienteId');
+
+    final pacienteDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(pacienteId)
+        .get();
+
+    if (!pacienteDoc.exists) {
+      throw Exception('El paciente no existe.');
+    }
+
+    debugPrint(
+      'ROL PACIENTE: '
+      '${pacienteDoc.data()?['rol']}',
+    );
+
+    final doctorDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(doctor.uid)
+        .get();
+
+    debugPrint(
+      'ROL DOCTOR: '
+      '${doctorDoc.data()?['rol']}',
+    );
+
+    if (doctorDoc.data()?['rol'] != 'doctor') {
+      throw Exception('La cuenta actual no tiene rol doctor.');
+    }
+
+    if (pacienteDoc.data()?['rol'] != 'paciente') {
+      throw Exception('El usuario seleccionado no tiene rol paciente.');
+    }
+
+    final datos = {
+      'pacienteId': pacienteId,
+      'doctorId': doctor.uid,
+      'fechaHora': Timestamp.fromDate(fechaHora),
+      'motivo': motivo.trim(),
+      'estado': 'confirmada',
+      'notasDoctor': notas.trim(),
+      'creadaPor': 'doctor',
+      'fechaCreacion': FieldValue.serverTimestamp(),
+    };
+
+    debugPrint('CREANDO CITA: $datos');
+
+    final doc = await FirebaseFirestore.instance.collection('citas').add(datos);
+
+    debugPrint('CITA CREADA: ${doc.id}');
   }
 }
