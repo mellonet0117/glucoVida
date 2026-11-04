@@ -4,6 +4,8 @@ import '../../core/theme/app_colors.dart';
 import '../../models/cita.dart';
 import '../../services/cita_service.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CitasScreen extends StatefulWidget {
   const CitasScreen({super.key});
 
@@ -227,9 +229,12 @@ class _CitasScreenState extends State<CitasScreen> {
 
     final motivoController = TextEditingController();
 
+    String? doctorSeleccionado;
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
 
       builder: (context) {
         return StatefulBuilder(
@@ -262,116 +267,349 @@ class _CitasScreenState extends State<CitasScreen> {
               }
             }
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 25,
-
-                bottom: MediaQuery.of(context).viewInsets.bottom + 25,
+            return Container(
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
 
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 18,
 
-                  children: [
-                    const Text(
-                      'Solicitar cita',
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 25,
+                ),
 
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 45,
+                          height: 5,
+
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFCBD5E1),
+
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    TextField(
-                      controller: motivoController,
+                      const Text(
+                        'Solicitar cita',
 
-                      maxLines: 3,
-
-                      decoration: const InputDecoration(
-                        labelText: 'Motivo de la cita',
-
-                        hintText: 'Ej. Revisión de seguimiento',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 17),
+                      const SizedBox(height: 5),
 
-                    OutlinedButton.icon(
-                      onPressed: seleccionarFecha,
+                      const Text(
+                        'Selecciona un doctor y agenda la fecha que prefieras.',
 
-                      icon: const Icon(Icons.calendar_today_outlined),
-
-                      label: Text(
-                        '${fecha.day.toString().padLeft(2, '0')}/'
-                        '${fecha.month.toString().padLeft(2, '0')}/'
-                        '${fecha.year}',
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
-                    ),
 
-                    const SizedBox(height: 10),
+                      const SizedBox(height: 22),
 
-                    OutlinedButton.icon(
-                      onPressed: seleccionarHora,
+                      // =====================
+                      // DOCTOR
+                      // =====================
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('usuarios')
+                            .where('rol', isEqualTo: 'doctor')
+                            .snapshots(),
 
-                      icon: const Icon(Icons.schedule),
-
-                      label: Text(
-                        '${hora.hour.toString().padLeft(2, '0')}:'
-                        '${hora.minute.toString().padLeft(2, '0')}',
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    FilledButton(
-                      onPressed: () async {
-                        if (motivoController.text.trim().isEmpty) {
-                          return;
-                        }
-
-                        final fechaHora = DateTime(
-                          fecha.year,
-                          fecha.month,
-                          fecha.day,
-                          hora.hour,
-                          hora.minute,
-                        );
-
-                        try {
-                          await service.crearCita(
-                            fechaHora: fechaHora,
-
-                            motivo: motivoController.text,
-                          );
-
-                          if (!context.mounted) {
-                            return;
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
 
-                          Navigator.pop(context);
-                        } catch (e) {
-                          if (!context.mounted) {
-                            return;
+                          if (snapshot.hasError) {
+                            return Text(
+                              'Error al cargar doctores: ${snapshot.error}',
+                            );
                           }
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                e.toString().replaceFirst('Exception: ', ''),
+                          final doctores = snapshot.data?.docs ?? [];
+
+                          if (doctores.isEmpty) {
+                            return const Text('No hay doctores disponibles.');
+                          }
+
+                          return DropdownButtonFormField<String>(
+                            initialValue: doctorSeleccionado,
+
+                            isExpanded: true,
+
+                            decoration: const InputDecoration(
+                              labelText: 'Seleccionar doctor',
+
+                              prefixIcon: Icon(
+                                Icons.medical_services_outlined,
+
+                                color: AppColors.primary,
                               ),
                             ),
-                          );
-                        }
-                      },
 
-                      child: const Text('Enviar solicitud'),
-                    ),
-                  ],
+                            items: doctores.map((doc) {
+                              final data = doc.data();
+
+                              String nombre =
+                                  data['nombreCompleto']?.toString().trim() ??
+                                  '';
+
+                              if (nombre.isEmpty) {
+                                final nombres =
+                                    data['nombre']?.toString() ?? '';
+
+                                final apellidos =
+                                    data['apellidos']?.toString() ?? '';
+
+                                nombre = '$nombres $apellidos'.trim();
+                              }
+
+                              if (nombre.isEmpty) {
+                                nombre = 'Doctor';
+                              }
+
+                              return DropdownMenuItem<String>(
+                                value: doc.id,
+
+                                child: Text(
+                                  nombre,
+
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+
+                            onChanged: (value) {
+                              setModalState(() {
+                                doctorSeleccionado = value;
+                              });
+                            },
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 17),
+
+                      // =====================
+                      // MOTIVO
+                      // =====================
+                      TextField(
+                        controller: motivoController,
+
+                        maxLines: 3,
+
+                        decoration: const InputDecoration(
+                          labelText: 'Motivo de la cita',
+
+                          hintText: 'Ej. Revisión de seguimiento',
+
+                          prefixIcon: Padding(
+                            padding: EdgeInsets.only(bottom: 45),
+
+                            child: Icon(
+                              Icons.description_outlined,
+
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // =====================
+                      // FECHA Y HORA
+                      // =====================
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: seleccionarFecha,
+
+                              icon: const Icon(Icons.calendar_today_outlined),
+
+                              label: Text(
+                                '${fecha.day.toString().padLeft(2, '0')}/'
+                                '${fecha.month.toString().padLeft(2, '0')}/'
+                                '${fecha.year}',
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 10),
+
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: seleccionarHora,
+
+                              icon: const Icon(Icons.schedule),
+
+                              label: Text(
+                                '${hora.hour.toString().padLeft(2, '0')}:'
+                                '${hora.minute.toString().padLeft(2, '0')}',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // =====================
+                      // BOTÓN
+                      // =====================
+                      Container(
+                        height: 53,
+
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+
+                        child: Material(
+                          color: Colors.transparent,
+
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+
+                            onTap: () async {
+                              if (doctorSeleccionado == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Selecciona un doctor.'),
+                                  ),
+                                );
+
+                                return;
+                              }
+
+                              if (motivoController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Escribe el motivo de la cita.',
+                                    ),
+                                  ),
+                                );
+
+                                return;
+                              }
+
+                              final fechaHora = DateTime(
+                                fecha.year,
+                                fecha.month,
+                                fecha.day,
+                                hora.hour,
+                                hora.minute,
+                              );
+
+                              if (fechaHora.isBefore(DateTime.now())) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Selecciona una fecha y hora futuras.',
+                                    ),
+                                  ),
+                                );
+
+                                return;
+                              }
+
+                              try {
+                                final navigator = Navigator.of(context);
+
+                                final messenger = ScaffoldMessenger.of(
+                                  this.context,
+                                );
+
+                                await service.solicitarCitaPaciente(
+                                  doctorId: doctorSeleccionado!,
+
+                                  fechaHora: fechaHora,
+
+                                  motivo: motivoController.text,
+                                );
+
+                                if (!mounted || !context.mounted) {
+                                  return;
+                                }
+
+                                navigator.pop();
+
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Solicitud enviada correctamente.',
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } catch (e) {
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      e.toString().replaceFirst(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+
+                              children: [
+                                Icon(Icons.send_outlined, color: Colors.white),
+
+                                SizedBox(width: 8),
+
+                                Text(
+                                  'Enviar solicitud',
+
+                                  style: TextStyle(
+                                    color: Colors.white,
+
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -379,7 +617,5 @@ class _CitasScreenState extends State<CitasScreen> {
         );
       },
     );
-
-    motivoController.dispose();
   }
 }

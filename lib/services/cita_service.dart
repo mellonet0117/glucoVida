@@ -50,6 +50,47 @@ class CitaService {
     });
   }
 
+  Future<void> solicitarCitaPaciente({
+    required String doctorId,
+    required DateTime fechaHora,
+    required String motivo,
+  }) async {
+    final paciente = FirebaseAuth.instance.currentUser;
+
+    if (paciente == null) {
+      throw Exception('No hay una sesión activa.');
+    }
+
+    if (doctorId.trim().isEmpty) {
+      throw Exception('Selecciona un doctor.');
+    }
+
+    await FirebaseFirestore.instance.collection('citas').add({
+      'pacienteId': paciente.uid,
+
+      'doctorId': doctorId,
+
+      'fechaHora': Timestamp.fromDate(fechaHora),
+
+      'motivo': motivo.trim(),
+
+      'estado': 'pendiente',
+
+      'notasDoctor': '',
+
+      'creadaPor': 'paciente',
+
+      'fechaCreacion': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> doctores() {
+    return FirebaseFirestore.instance
+        .collection('usuarios')
+        .where('rol', isEqualTo: 'doctor')
+        .snapshots();
+  }
+
   Stream<List<Cita>> citasPaciente() {
     return _citas.where('pacienteId', isEqualTo: uid).snapshots().map((
       snapshot,
@@ -63,23 +104,33 @@ class CitaService {
   }
 
   Stream<List<Cita>> citasDoctor() {
-    return _citas.where('doctorId', isEqualTo: uid).snapshots().map((snapshot) {
-      final citas = snapshot.docs.map(Cita.fromFirestore).toList();
+    final doctor = FirebaseAuth.instance.currentUser;
 
-      citas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
+    if (doctor == null) {
+      return const Stream.empty();
+    }
 
-      return citas;
-    });
+    return FirebaseFirestore.instance
+        .collection('citas')
+        .where('doctorId', isEqualTo: doctor.uid)
+        .snapshots()
+        .map((snapshot) {
+          final citas = snapshot.docs
+              .map((doc) => Cita.fromFirestore(doc))
+              .toList();
+
+          citas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
+
+          return citas;
+        });
   }
 
   Future<void> cambiarEstado({
     required String citaId,
     required String estado,
-    String notasDoctor = '',
   }) async {
-    await _citas.doc(citaId).update({
+    await FirebaseFirestore.instance.collection('citas').doc(citaId).update({
       'estado': estado,
-      'notasDoctor': notasDoctor.trim(),
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
   }
