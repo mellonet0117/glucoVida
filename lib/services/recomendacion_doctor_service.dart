@@ -30,12 +30,14 @@ class RecomendacionDoctorService {
     required String tipo,
     required String titulo,
     required String descripcion,
+    Map<String, dynamic>? detalles,
   }) async {
     await coleccion(pacienteId).add({
       'doctorId': doctorId,
       'tipo': tipo,
       'titulo': titulo.trim(),
       'descripcion': descripcion.trim(),
+      'detalles': detalles ?? {},
       'fecha': FieldValue.serverTimestamp(),
     });
   }

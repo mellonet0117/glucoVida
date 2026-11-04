@@ -81,15 +81,9 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   // =========================================================
 
   Stream<QuerySnapshot<Map<String, dynamic>>> pacientesAsignados() {
-    final usuario = _auth.currentUser;
-
-    if (usuario == null) {
-      return const Stream.empty();
-    }
-
     return _firestore
         .collection('usuarios')
-        .where('doctorId', isEqualTo: usuario.uid)
+        .where('rol', isEqualTo: 'paciente')
         .snapshots();
   }
 
@@ -164,10 +158,11 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
 
       appBar: AppBar(
         elevation: 0,
+        scrolledUnderElevation: 0,
 
         title: Image.asset(
           'assets/images/glucovida_horizontal.png',
-          height: 38,
+          height: 48,
           fit: BoxFit.contain,
         ),
 

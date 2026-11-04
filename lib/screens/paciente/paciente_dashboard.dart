@@ -140,6 +140,8 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
           fit: BoxFit.contain,
         ),
 
+        centerTitle: true,
+
         actions: [
           IconButton(
             tooltip: 'Notificaciones',
@@ -507,27 +509,6 @@ class _PacienteDashboardState extends State<PacienteDashboard> {
 
                       setState(() {
                         opcionSeleccionada = 'Registrar Glucosa';
-                      });
-                    },
-                  ),
-
-                  _itemMenu(
-                    Icons.history,
-                    'Historial',
-
-                    activo: opcionSeleccionada == 'Historial',
-
-                    onTap: () {
-                      Navigator.pop(context);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => HistorialGlucosaScreen(),
-                        ),
-                      );
-                      setState(() {
-                        opcionSeleccionada = 'Historial';
                       });
                     },
                   ),

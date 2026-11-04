@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/cita.dart';
 
@@ -49,6 +50,47 @@ class CitaService {
     });
   }
 
+  Future<void> solicitarCitaPaciente({
+    required String doctorId,
+    required DateTime fechaHora,
+    required String motivo,
+  }) async {
+    final paciente = FirebaseAuth.instance.currentUser;
+
+    if (paciente == null) {
+      throw Exception('No hay una sesión activa.');
+    }
+
+    if (doctorId.trim().isEmpty) {
+      throw Exception('Selecciona un doctor.');
+    }
+
+    await FirebaseFirestore.instance.collection('citas').add({
+      'pacienteId': paciente.uid,
+
+      'doctorId': doctorId,
+
+      'fechaHora': Timestamp.fromDate(fechaHora),
+
+      'motivo': motivo.trim(),
+
+      'estado': 'pendiente',
+
+      'notasDoctor': '',
+
+      'creadaPor': 'paciente',
+
+      'fechaCreacion': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> doctores() {
+    return FirebaseFirestore.instance
+        .collection('usuarios')
+        .where('rol', isEqualTo: 'doctor')
+        .snapshots();
+  }
+
   Stream<List<Cita>> citasPaciente() {
     return _citas.where('pacienteId', isEqualTo: uid).snapshots().map((
       snapshot,
@@ -62,23 +104,33 @@ class CitaService {
   }
 
   Stream<List<Cita>> citasDoctor() {
-    return _citas.where('doctorId', isEqualTo: uid).snapshots().map((snapshot) {
-      final citas = snapshot.docs.map(Cita.fromFirestore).toList();
+    final doctor = FirebaseAuth.instance.currentUser;
 
-      citas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
+    if (doctor == null) {
+      return const Stream.empty();
+    }
 
-      return citas;
-    });
+    return FirebaseFirestore.instance
+        .collection('citas')
+        .where('doctorId', isEqualTo: doctor.uid)
+        .snapshots()
+        .map((snapshot) {
+          final citas = snapshot.docs
+              .map((doc) => Cita.fromFirestore(doc))
+              .toList();
+
+          citas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
+
+          return citas;
+        });
   }
 
   Future<void> cambiarEstado({
     required String citaId,
     required String estado,
-    String notasDoctor = '',
   }) async {
-    await _citas.doc(citaId).update({
+    await FirebaseFirestore.instance.collection('citas').doc(citaId).update({
       'estado': estado,
-      'notasDoctor': notasDoctor.trim(),
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
   }
@@ -91,5 +143,71 @@ class CitaService {
       'fechaHora': Timestamp.fromDate(nuevaFecha),
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<void> crearCitaDoctor({
+    required String pacienteId,
+    required DateTime fechaHora,
+    required String motivo,
+    String notas = '',
+  }) async {
+    final doctor = FirebaseAuth.instance.currentUser;
+
+    if (doctor == null) {
+      throw Exception('No hay una sesión activa.');
+    }
+
+    debugPrint('DOCTOR UID: ${doctor.uid}');
+
+    debugPrint('PACIENTE UID: $pacienteId');
+
+    final pacienteDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(pacienteId)
+        .get();
+
+    if (!pacienteDoc.exists) {
+      throw Exception('El paciente no existe.');
+    }
+
+    debugPrint(
+      'ROL PACIENTE: '
+      '${pacienteDoc.data()?['rol']}',
+    );
+
+    final doctorDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(doctor.uid)
+        .get();
+
+    debugPrint(
+      'ROL DOCTOR: '
+      '${doctorDoc.data()?['rol']}',
+    );
+
+    if (doctorDoc.data()?['rol'] != 'doctor') {
+      throw Exception('La cuenta actual no tiene rol doctor.');
+    }
+
+    if (pacienteDoc.data()?['rol'] != 'paciente') {
+      throw Exception('El usuario seleccionado no tiene rol paciente.');
+    }
+
+    final datos = {
+      'pacienteId': pacienteId,
+      'doctorId': doctor.uid,
+      'fechaHora': Timestamp.fromDate(fechaHora),
+      'motivo': motivo.trim(),
+      'estado': 'confirmada',
+      'notasDoctor': notas.trim(),
+      'creadaPor': 'doctor',
+      'fechaCreacion': FieldValue.serverTimestamp(),
+    };
+
+    debugPrint('CREANDO CITA: $datos');
+
+    final doc = await FirebaseFirestore.instance.collection('citas').add(datos);
+
+    debugPrint('CITA CREADA: ${doc.id}');
   }
 }

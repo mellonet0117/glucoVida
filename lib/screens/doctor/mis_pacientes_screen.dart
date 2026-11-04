@@ -36,7 +36,7 @@ class _MisPacientesScreenState extends State<MisPacientesScreen> {
 
     return _firestore
         .collection('usuarios')
-        .where('doctorId', isEqualTo: usuario.uid)
+        .where('rol', isEqualTo: 'paciente')
         .snapshots();
   }
 
