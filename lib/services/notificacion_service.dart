@@ -10,15 +10,24 @@ class NotificacionService {
   static Future<void> inicializar() async {
     tz.initializeTimeZones();
 
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    await android?.createNotificationChannel(_canalGeneral);
+
+    await android?.requestNotificationsPermission();
+
     final zona = await FlutterTimezone.getLocalTimezone();
 
     tz.setLocalLocation(tz.getLocation(zona.identifier));
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    //const android = AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const settings = InitializationSettings(android: android);
+    //const settings = InitializationSettings(android: android);
 
-    await _plugin.initialize(settings: settings);
+    //await _plugin.initialize(settings: settings);
 
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<
@@ -27,6 +36,14 @@ class NotificacionService {
 
     await androidPlugin?.requestNotificationsPermission();
   }
+
+  static const AndroidNotificationChannel _canalGeneral =
+      AndroidNotificationChannel(
+        'glucovida_general',
+        'GlucoVida',
+        description: 'Citas y recomendaciones de GlucoVida',
+        importance: Importance.max,
+      );
 
   static Future<void> programarDiario({
     required int id,
@@ -89,5 +106,37 @@ class NotificacionService {
 
   static Future<void> cancelar(int id) async {
     await _plugin.cancel(id: id);
+  }
+
+  static Future<void> mostrarInstantanea({
+    required String titulo,
+    required String cuerpo,
+    String? payload,
+  }) async {
+    const detalles = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'glucovida_general',
+        'GlucoVida',
+        channelDescription: 'Citas y recomendaciones de GlucoVida',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
+    final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
+    await _plugin.show(
+      id: id,
+      title: titulo,
+      body: cuerpo,
+      notificationDetails: detalles,
+      payload: payload,
+    );
   }
 }

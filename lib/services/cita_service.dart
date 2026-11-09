@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import 'push_service.dart';
+
 import '../models/cita.dart';
 
 class CitaService {
@@ -65,7 +67,7 @@ class CitaService {
       throw Exception('Selecciona un doctor.');
     }
 
-    await FirebaseFirestore.instance.collection('citas').add({
+    final cita = await FirebaseFirestore.instance.collection('citas').add({
       'pacienteId': paciente.uid,
 
       'doctorId': doctorId,
@@ -82,6 +84,11 @@ class CitaService {
 
       'fechaCreacion': FieldValue.serverTimestamp(),
     });
+
+    // La cita YA quedó guardada.
+    // Si la notificación falla,
+    // no afecta la cita.
+    await PushService.enviar(tipo: 'solicitud_cita', citaId: cita.id);
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> doctores() {
@@ -131,18 +138,30 @@ class CitaService {
   }) async {
     await FirebaseFirestore.instance.collection('citas').doc(citaId).update({
       'estado': estado,
+
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
+
+    if (estado == 'confirmada') {
+      await PushService.enviar(tipo: 'cita_confirmada', citaId: citaId);
+    }
+
+    if (estado == 'cancelada') {
+      await PushService.enviar(tipo: 'cita_cancelada', citaId: citaId);
+    }
   }
 
   Future<void> reprogramar({
     required String citaId,
     required DateTime nuevaFecha,
   }) async {
-    await _citas.doc(citaId).update({
+    await FirebaseFirestore.instance.collection('citas').doc(citaId).update({
       'fechaHora': Timestamp.fromDate(nuevaFecha),
+
       'fechaActualizacion': FieldValue.serverTimestamp(),
     });
+
+    await PushService.enviar(tipo: 'cita_reprogramada', citaId: citaId);
   }
 
   Future<void> crearCitaDoctor({
@@ -209,5 +228,13 @@ class CitaService {
     final doc = await FirebaseFirestore.instance.collection('citas').add(datos);
 
     debugPrint('CITA CREADA: ${doc.id}');
+  }
+
+  Future<void> eliminarCita(String citaId) async {
+    // Primero avisa
+    await PushService.enviar(tipo: 'cita_eliminada', citaId: citaId);
+
+    // Después elimina
+    await FirebaseFirestore.instance.collection('citas').doc(citaId).delete();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -216,6 +217,18 @@ class PacienteDetalleDoctor extends StatelessWidget {
                     '${paciente['nombre'] ?? ''} '
                     '${paciente['apellidos'] ?? ''}',
                   ),
+
+                  const SizedBox(height: 25),
+
+                  _seccionMedicamentos(),
+
+                  const SizedBox(height: 18),
+
+                  _seccionProximasCitas(),
+
+                  const SizedBox(height: 18),
+
+                  _seccionRecomendaciones(),
 
                   const SizedBox(height: 25),
 
@@ -643,6 +656,419 @@ class PacienteDetalleDoctor extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) =>
             NuevaRecomendacionScreen(pacienteId: pacienteId, tipoInicial: tipo),
+      ),
+    );
+  }
+
+  Widget _seccionMedicamentos() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(pacienteId)
+          .collection('medicamentos')
+          .snapshots(),
+
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return _tarjetaVacia(
+            icono: Icons.medication_outlined,
+            titulo: 'Medicamentos actuales',
+            mensaje: 'No se pudieron cargar.',
+          );
+        }
+
+        final medicamentos =
+            snapshot.data?.docs.where((doc) {
+              final data = doc.data();
+
+              return data['activo'] != false;
+            }).toList() ??
+            [];
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _tituloSeccion(
+                icono: Icons.medication_outlined,
+                titulo: 'Medicamentos actuales',
+                cantidad: medicamentos.length,
+              ),
+
+              const SizedBox(height: 14),
+
+              if (medicamentos.isEmpty)
+                const Text(
+                  'El paciente no tiene medicamentos registrados.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                )
+              else
+                ...medicamentos.take(3).map((doc) {
+                  final data = doc.data();
+
+                  final nombre = data['nombre']?.toString() ?? 'Medicamento';
+
+                  final dosis = data['dosis']?.toString() ?? '';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.medication_liquid_outlined,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+
+                        const SizedBox(width: 11),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nombre,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+
+                              if (dosis.isNotEmpty)
+                                Text(
+                                  dosis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _seccionProximasCitas() {
+    final doctorId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (doctorId == null) {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('citas')
+          .where('pacienteId', isEqualTo: pacienteId)
+          .where('doctorId', isEqualTo: doctorId)
+          .snapshots(),
+
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final ahora = DateTime.now();
+
+        final citas =
+            snapshot.data?.docs.where((doc) {
+              final data = doc.data();
+
+              final timestamp = data['fechaHora'];
+
+              final estado = data['estado']?.toString() ?? '';
+
+              if (timestamp is! Timestamp) {
+                return false;
+              }
+
+              final fecha = timestamp.toDate();
+
+              return fecha.isAfter(ahora) && estado != 'cancelada';
+            }).toList() ??
+            [];
+
+        citas.sort((a, b) {
+          final fechaA = (a.data()['fechaHora'] as Timestamp).toDate();
+
+          final fechaB = (b.data()['fechaHora'] as Timestamp).toDate();
+
+          return fechaA.compareTo(fechaB);
+        });
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _tituloSeccion(
+                icono: Icons.event_outlined,
+                titulo: 'Próxima cita',
+                cantidad: citas.length,
+              ),
+
+              const SizedBox(height: 14),
+
+              if (citas.isEmpty)
+                const Text(
+                  'No hay citas próximas con este paciente.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                )
+              else
+                Builder(
+                  builder: (context) {
+                    final data = citas.first.data();
+
+                    final fecha = (data['fechaHora'] as Timestamp).toDate();
+
+                    final motivo = data['motivo']?.toString() ?? 'Consulta';
+
+                    return Row(
+                      children: [
+                        Container(
+                          width: 45,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.calendar_month_outlined,
+                            color: AppColors.primary,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                motivo,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+
+                              const SizedBox(height: 3),
+
+                              Text(
+                                '${fecha.day.toString().padLeft(2, '0')}/'
+                                '${fecha.month.toString().padLeft(2, '0')}/'
+                                '${fecha.year} · '
+                                '${fecha.hour.toString().padLeft(2, '0')}:'
+                                '${fecha.minute.toString().padLeft(2, '0')}',
+
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _seccionRecomendaciones() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(pacienteId)
+          .collection('recomendaciones')
+          .snapshots(),
+
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final recomendaciones = snapshot.data?.docs.toList() ?? [];
+
+        recomendaciones.sort((a, b) {
+          final fechaA = a.data()['fecha'];
+
+          final fechaB = b.data()['fecha'];
+
+          if (fechaA is! Timestamp || fechaB is! Timestamp) {
+            return 0;
+          }
+
+          return fechaB.compareTo(fechaA);
+        });
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _tituloSeccion(
+                icono: Icons.medical_information_outlined,
+                titulo: 'Recomendaciones recientes',
+                cantidad: recomendaciones.length,
+              ),
+
+              const SizedBox(height: 14),
+
+              if (recomendaciones.isEmpty)
+                const Text(
+                  'Todavía no hay recomendaciones.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                )
+              else
+                ...recomendaciones.take(3).map((doc) {
+                  final data = doc.data();
+
+                  final titulo = data['titulo']?.toString() ?? 'Recomendación';
+
+                  final tipo = data['tipo']?.toString() ?? 'General';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          color: AppColors.primary,
+                          size: 21,
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                titulo,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+
+                              Text(
+                                tipo,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tituloSeccion({
+    required IconData icono,
+    required String titulo,
+    required int cantidad,
+  }) {
+    return Row(
+      children: [
+        Icon(icono, color: AppColors.primary),
+
+        const SizedBox(width: 8),
+
+        Expanded(
+          child: Text(
+            titulo,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: .10),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '$cantidad',
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tarjetaVacia({
+    required IconData icono,
+    required String titulo,
+    required String mensaje,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _tituloSeccion(icono: icono, titulo: titulo, cantidad: 0),
+
+          const SizedBox(height: 12),
+
+          Text(mensaje, style: const TextStyle(color: AppColors.textSecondary)),
+        ],
       ),
     );
   }

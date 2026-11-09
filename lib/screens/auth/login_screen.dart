@@ -73,6 +73,227 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> recuperarContrasena() async {
+    final correo = correoController.text.trim();
+
+    if (correo.isEmpty) {
+      mostrarMensaje('Escribe primero tu correo electrónico');
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.setLanguageCode('es');
+
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: correo);
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .12),
+                    blurRadius: 25,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ==========================
+                  // ICONO
+                  // ==========================
+
+                  Container(
+                    width: 82,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: .25),
+                          blurRadius: 18,
+                          offset: const Offset(0, 7),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.mark_email_read_rounded,
+                      color: Colors.white,
+                      size: 38,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // ==========================
+                  // TÍTULO
+                  // ==========================
+                  const Text(
+                    '¡Revisa tu correo!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 9),
+
+                  const Text(
+                    'Te enviamos un enlace seguro para restablecer tu contraseña.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ==========================
+                  // CORREO
+                  // ==========================
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 13,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: .07),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: .15),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.mail_outline_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: Text(
+                            correo,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 20),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 17),
+
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 15,
+                        color: AppColors.textMuted,
+                      ),
+                      SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          'Si no lo encuentras, revisa la carpeta de spam.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ==========================
+                  // BOTÓN
+                  // ==========================
+                  Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: .20),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Entendido',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      String mensaje = 'No se pudo enviar el correo';
+
+      if (e.code == 'invalid-email') {
+        mensaje = 'El correo electrónico no es válido';
+      } else if (e.code == 'too-many-requests') {
+        mensaje = 'Demasiados intentos. Intenta más tarde';
+      } else if (e.code == 'network-request-failed') {
+        mensaje = 'Revisa tu conexión a internet';
+      }
+
+      mostrarMensaje(mensaje);
+    } catch (e) {
+      mostrarMensaje('Ocurrió un error al enviar el correo');
+    }
+  }
+
   void mostrarMensaje(String mensaje) {
     if (!mounted) return;
 
@@ -219,10 +440,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
 
                           GestureDetector(
-                            onTap: () {
-                              // Después conectamos
-                              // recuperación Firebase.
-                            },
+                            onTap: recuperarContrasena,
+
                             child: const Text(
                               '¿Olvidaste tu contraseña?',
                               style: TextStyle(

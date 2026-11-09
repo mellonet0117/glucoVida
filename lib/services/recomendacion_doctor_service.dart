@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'push_service.dart';
+
 import '../models/recomendacion_doctor.dart';
 
 class RecomendacionDoctorService {
@@ -32,14 +34,33 @@ class RecomendacionDoctorService {
     required String descripcion,
     Map<String, dynamic>? detalles,
   }) async {
-    await coleccion(pacienteId).add({
-      'doctorId': doctorId,
+    final doctor = FirebaseAuth.instance.currentUser;
+
+    if (doctor == null) {
+      throw Exception('No hay una sesión activa.');
+    }
+
+    final recomendacion = await coleccion(pacienteId).add({
+      'doctorId': doctor.uid,
+
       'tipo': tipo,
+
       'titulo': titulo.trim(),
+
       'descripcion': descripcion.trim(),
+
       'detalles': detalles ?? {},
+
       'fecha': FieldValue.serverTimestamp(),
     });
+
+    await PushService.enviar(
+      tipo: 'recomendacion_nueva',
+
+      pacienteId: pacienteId,
+
+      recomendacionId: recomendacion.id,
+    );
   }
 
   Stream<List<RecomendacionDoctor>> obtener(String pacienteId) {

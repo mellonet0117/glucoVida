@@ -218,7 +218,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                 // ======================
 
                 Text(
-                  'Hola, Dr. $nombreDoctor 👋',
+                  'Hola, Dr. $nombreDoctor',
 
                   style: const TextStyle(
                     fontSize: 27,

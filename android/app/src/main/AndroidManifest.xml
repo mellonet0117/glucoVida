@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Internet para Firebase, Vercel y FCM -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Notificaciones Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Para recuperar recordatorios después de reiniciar -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> 
+
+
     <application
         android:label="glucovida"
         android:name="${applicationName}"
@@ -25,6 +36,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+         <!-- Canal predeterminado para Firebase Messaging -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="glucovida_general" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

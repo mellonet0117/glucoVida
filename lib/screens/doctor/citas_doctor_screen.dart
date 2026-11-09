@@ -334,7 +334,70 @@ class _CitasDoctorScreenState extends State<CitasDoctorScreen> {
                 ),
               ),
 
-              _estadoChip(cita.estado),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _estadoChip(cita.estado),
+
+                  const SizedBox(height: 3),
+
+                  PopupMenuButton<String>(
+                    tooltip: 'Opciones',
+
+                    icon: const Icon(
+                      Icons.more_vert,
+                      color: AppColors.textSecondary,
+                    ),
+
+                    onSelected: (opcion) {
+                      if (opcion == 'reprogramar') {
+                        _reprogramarCita(cita);
+                      }
+
+                      if (opcion == 'eliminar') {
+                        _confirmarEliminar(cita);
+                      }
+                    },
+
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'reprogramar',
+
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_calendar_outlined,
+                              color: AppColors.primary,
+                            ),
+
+                            SizedBox(width: 10),
+
+                            Text('Reprogramar'),
+                          ],
+                        ),
+                      ),
+
+                      const PopupMenuItem(
+                        value: 'eliminar',
+
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: AppColors.danger),
+
+                            SizedBox(width: 10),
+
+                            Text(
+                              'Eliminar cita',
+
+                              style: TextStyle(color: AppColors.danger),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
 
@@ -437,6 +500,191 @@ class _CitasDoctorScreenState extends State<CitasDoctorScreen> {
   }
 
   // ==========================================
+  // Método para reprogramar
+  // ==========================================
+
+  Future<void> _reprogramarCita(Cita cita) async {
+    DateTime nuevaFecha = cita.fechaHora;
+
+    TimeOfDay nuevaHora = TimeOfDay.fromDateTime(cita.fechaHora);
+
+    final resultado = await showDialog<bool>(
+      context: context,
+
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+
+              title: const Row(
+                children: [
+                  Icon(Icons.edit_calendar_outlined, color: AppColors.primary),
+
+                  SizedBox(width: 10),
+
+                  Text('Reprogramar cita'),
+                ],
+              ),
+
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+
+                children: [
+                  const Text(
+                    'Selecciona la nueva fecha y hora de la cita.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+
+                    leading: const Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColors.primary,
+                    ),
+
+                    title: const Text('Fecha'),
+
+                    subtitle: Text(
+                      '${nuevaFecha.day.toString().padLeft(2, '0')}/'
+                      '${nuevaFecha.month.toString().padLeft(2, '0')}/'
+                      '${nuevaFecha.year}',
+                    ),
+
+                    onTap: () async {
+                      final fecha = await showDatePicker(
+                        context: context,
+
+                        initialDate: nuevaFecha,
+
+                        firstDate: DateTime.now(),
+
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+
+                      if (fecha != null) {
+                        setDialogState(() {
+                          nuevaFecha = fecha;
+                        });
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+
+                    leading: const Icon(
+                      Icons.schedule,
+                      color: AppColors.primary,
+                    ),
+
+                    title: const Text('Hora'),
+
+                    subtitle: Text(
+                      '${nuevaHora.hour.toString().padLeft(2, '0')}:'
+                      '${nuevaHora.minute.toString().padLeft(2, '0')}',
+                    ),
+
+                    onTap: () async {
+                      final hora = await showTimePicker(
+                        context: context,
+
+                        initialTime: nuevaHora,
+                      );
+
+                      if (hora != null) {
+                        setDialogState(() {
+                          nuevaHora = hora;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, false);
+                  },
+
+                  child: const Text('Cancelar'),
+                ),
+
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, true);
+                  },
+
+                  icon: const Icon(Icons.check),
+
+                  label: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (resultado != true) {
+      return;
+    }
+
+    final fechaHora = DateTime(
+      nuevaFecha.year,
+      nuevaFecha.month,
+      nuevaFecha.day,
+      nuevaHora.hour,
+      nuevaHora.minute,
+    );
+
+    if (fechaHora.isBefore(DateTime.now())) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La nueva fecha debe ser futura.')),
+      );
+
+      return;
+    }
+
+    try {
+      await service.reprogramar(citaId: cita.id, nuevaFecha: fechaHora);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cita reprogramada correctamente.'),
+
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('No se pudo reprogramar: $e')));
+    }
+  }
+
+  // ==========================================
   // CAMBIAR ESTADO
   // ==========================================
 
@@ -462,6 +710,100 @@ class _CitasDoctorScreenState extends State<CitasDoctorScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se pudo actualizar la cita: $e')),
+      );
+    }
+  }
+
+  // ==========================================
+  // ELIMINAR
+  // ==========================================
+
+  Future<void> _confirmarEliminar(Cita cita) async {
+    final eliminar = await showDialog<bool>(
+      context: context,
+
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+
+          icon: Container(
+            width: 60,
+            height: 60,
+
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: .10),
+
+              shape: BoxShape.circle,
+            ),
+
+            child: const Icon(
+              Icons.delete_outline,
+
+              color: AppColors.danger,
+
+              size: 30,
+            ),
+          ),
+
+          title: const Text('¿Eliminar cita?', textAlign: TextAlign.center),
+
+          content: const Text(
+            'Esta cita se eliminará definitivamente.',
+            textAlign: TextAlign.center,
+
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+
+          actionsAlignment: MainAxisAlignment.center,
+
+          actions: [
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+
+              child: const Text('Cancelar'),
+            ),
+
+            FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+
+              icon: const Icon(Icons.delete_outline),
+
+              label: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (eliminar != true) {
+      return;
+    }
+
+    try {
+      await service.eliminarCita(cita.id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cita eliminada correctamente.'),
+
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo eliminar la cita: $e')),
       );
     }
   }

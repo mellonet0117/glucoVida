@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'firebase_messaging_service.dart';
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -97,6 +99,11 @@ class AuthService {
 
       throw Exception('Esta cuenta se encuentra desactivada.');
     }
+
+    // =====================================
+    // AQUÍ VA FIREBASE MESSAGING
+    // =====================================
+    await FirebaseMessagingService.inicializar();
   }
 
   // =========================================
